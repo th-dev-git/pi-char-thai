@@ -10,8 +10,10 @@
  *
  * Ticket 09 — Backspace. Stock `handleBackspace` deletes a whole grapheme, so
  * one press wipes an entire Thai syllable (`น้ำ` is one grapheme). The override
- * peels a single code point off Thai combining-mark clusters and leaves every
- * other cluster — emoji ZWJ, CJK, Latin — atomic.
+ * peels Thai combining-mark clusters code point by code point and leaves every
+ * other cluster — emoji ZWJ, CJK, Latin — atomic. One exception: ำ is a single
+ * peel step — one press removes the whole vowel, both the dot and า, whether
+ * the text holds composed U+0E33 or the decomposed ํ+า pair.
  */
 
 import { CustomEditor } from '@earendil-works/pi-coding-agent'
@@ -39,9 +41,9 @@ interface EditorState {
  * Thai combining marks: สระบน/ล่าง, วรรณยุกต์, ไม้หันอากาศ, ์, ํ, ฺ. A grapheme
  * holding one of these is a Thai syllable cluster the user expects to peel
  * mark-by-mark. U+0E33 (ำ) is the composed form of ํ + า and is not itself a
- * combining mark, but a cluster ending in it must peel too — otherwise pasted
- * composed text would delete atomically where the same typed decomposed text
- * peels (spec.md "Backspace: Thai cluster peel", step 4).
+ * combining mark, but a cluster ending in it must peel too — otherwise a bare
+ * composed cluster like `อำ` would fall to stock and lose its base consonant
+ * together with the vowel (spec.md "Backspace: Thai cluster peel", step 4).
  */
 const THAI_COMBINING = /[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/
 
@@ -225,9 +227,24 @@ export class ThaiEditor extends CustomEditor {
     const state = self.state
     const line = state.lines[state.cursorLine] || ''
     const beforeCursor = line.slice(0, state.cursorCol)
+
+    // ำ is one peel step: one press removes the dot and า together. Typed
+    // input arrives decomposed as ํ+า (macOS keyboard order, ticket 01) or
+    // า+ํ (canonical order); both display as ำ, so a tail pair in either
+    // order goes together. Detect it on raw code points, before grapheme
+    // inspection: in the macOS order า is its own grapheme and would
+    // otherwise fall through to stock single-cell deletion. Spread iterates
+    // code points, so `tail`/`prev` stay whole even across a surrogate pair.
+    const codePoints = [...beforeCursor]
+    const tail = codePoints[codePoints.length - 1]
+    const prev = codePoints[codePoints.length - 2]
+    const isAmPair
+      = (tail === '\u0E32' && prev === '\u0E4D')
+        || (tail === '\u0E4D' && prev === '\u0E32')
+
     const graphemes = [...self.segment(beforeCursor, 'grapheme')]
     const cluster = graphemes[graphemes.length - 1]?.segment
-    if (state.cursorCol === 0 || !cluster || !isThaiPeelable(cluster)) {
+    if (state.cursorCol === 0 || (!isAmPair && (!cluster || !isThaiPeelable(cluster)))) {
       // @ts-expect-error — private-in-TS, real prototype method at runtime.
       super.handleBackspace()
       return
@@ -237,10 +254,10 @@ export class ThaiEditor extends CustomEditor {
     self.lastAction = null
     self.pushUndoSnapshot()
 
-    // Spread iterates code points, so `tail` is one full code point even for a
-    // surrogate pair; composed ำ decomposes to its mark rather than vanishing.
-    const tail = [...beforeCursor].pop()!
-    const head = beforeCursor.slice(0, beforeCursor.length - tail.length) + (tail === '\u0E33' ? '\u0E4D' : '')
+    // Composed U+0E33 is one code point, so removing `tail` removes the whole
+    // vowel; the decomposed pair removes both code points at once.
+    const removed = isAmPair ? prev!.length + tail!.length : tail!.length
+    const head = beforeCursor.slice(0, beforeCursor.length - removed)
     state.lines[state.cursorLine] = head + line.slice(state.cursorCol)
     self.setCursorCol(head.length)
 

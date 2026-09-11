@@ -1,7 +1,7 @@
 {
   "name": "pi-char-thai",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Thai input fixes for pi's editor: vertical cursor drift and combining-mark Backspace (custom editor subclass, no core patch)",
   "license": "MIT",
   "homepage": "https://github.com/th-dev-git/pi-char-thai",

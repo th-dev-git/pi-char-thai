@@ -21,7 +21,7 @@ Open Pi and type Thai text with combining characters:
 Then:
 
 1. Wrap a long Thai line and move the cursor up/down — the cursor lands on the same visual column instead of drifting.
-2. Press `Backspace` on `กํา` or `น้ำ` — the combining mark peels off first (`กํา` → `ก`, `น้ำ` → `น`), the base character stays until the next press.
+2. Press `Backspace` on `กํา` or `น้ำ` — the combining marks peel off one step at a time and `ำ` (dot plus า) vanishes in a single press (`กํา` → `ก`, `น้ำ` → `น้`), the base character stays until the next press.
 
 ## How it works
 
@@ -29,7 +29,7 @@ Pi's native editor measures lines and deletes by code unit assumptions that brea
 
 - A `ThaiEditor` subclass of `CustomEditor` is registered via `setEditorComponent` on `session_start`.
 - Vertical movement uses a grapheme-aware visual line map, so up/down across wrapped Thai lines keeps the visual column.
-- Backspace peels Thai combining marks (and `ำ`'s Sara Am) off the cluster before deleting the base character, using `Intl.Segmenter` grapheme segmentation.
+- Backspace peels Thai combining marks off the cluster before deleting the base character, using `Intl.Segmenter` grapheme segmentation. Sara Am (`ำ`) is one peel step: composed U+0E33 deletes whole, and a decomposed ํ+า pair (either order) deletes together, so the dot never lingers.
 - Fail-closed: headless sessions, or any Pi whose editor no longer exposes the methods the overrides adapt, keep the stock editor with one warning and never a throw.
 
 At every other input path, Pi's native editing behavior stays unchanged.
@@ -50,7 +50,7 @@ bun test tests/pi-char-thai.test.ts   # unit
 bun run test:integration              # headless Pi
 ```
 
-Manual check: open Pi, type `กําน้ำ`, press `Backspace` twice, then confirm each press removes one combining mark before the base character.
+Manual check: open Pi, type `กําน้ำ`, press `Backspace` — one press removes all of `ำ`, further presses peel the tone mark and then the base character.
 
 ## Compatibility and risks
 
