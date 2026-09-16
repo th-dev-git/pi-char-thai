@@ -8,7 +8,8 @@
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
-import { missingEditorMethods, ThaiEditor } from './editor'
+import { makeThaiEditorClass, missingEditorMethods } from './editor'
+import { chainEditorComponent } from './editor-chain'
 
 export default function charThai(pi: ExtensionAPI) {
   pi.on('session_start', (_event, ctx) => {
@@ -21,9 +22,11 @@ export default function charThai(pi: ExtensionAPI) {
           `pi-char-thai: incompatible pi editor shape (missing ${missing.join(', ')}) — keeping the stock editor`,
           'warning',
         )
-        return
+        return // leaves any editor factory another extension installed untouched
       }
-      ctx.ui.setEditorComponent((tui, theme, keybindings) => new ThaiEditor(tui, theme, keybindings))
+      // Chain, don't replace: another editor-installing extension (e.g.
+      // pi-slash-suggest) may load before or after us (editor-chain.ts).
+      chainEditorComponent(ctx.ui, makeThaiEditorClass)
     }
     catch (err) {
       // Never take down pi startup over an editor swap.
