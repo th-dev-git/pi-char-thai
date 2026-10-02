@@ -87,17 +87,17 @@ export function makeThaiEditorClass(Base: EditorConstructor = CustomEditor): Edi
   // pinned 0.84.3 and host pi 0.85.1, ticket 02 Q4). The factory shape-checks the
   // names before installing this editor.
   return class ThaiEditor extends Base {
-  /**
-   * Stock map plus each segment's cell width, so the movement math never has
-   * to re-derive it. `length` stays UTF-16 — inherited `findVisualLineAt`,
-   * `render` and friends still index with code units.
-   */
+    /**
+     * Stock map plus each segment's cell width, so the movement math never has
+     * to re-derive it. `length` stays UTF-16 — inherited `findVisualLineAt`,
+     * `render` and friends still index with code units.
+     */
     private buildVisualLineMap(width: number): VisualLine[] {
-    // @ts-expect-error — see above: private-in-TS, overridable at runtime.
+      // @ts-expect-error — see above: private-in-TS, overridable at runtime.
       const visualLines = super.buildVisualLineMap(width) as Omit<VisualLine, 'cells'>[]
       // @ts-expect-error — `state` is private (and untyped) on pi-tui's Editor.
       const lines = (this.state as EditorState).lines
-      return visualLines.map(vl => ({
+      return visualLines.map((vl) => ({
         ...vl,
         cells: visibleWidth((lines[vl.logicalLine] || '').slice(vl.startCol, vl.startCol + vl.length)),
       }))
@@ -111,7 +111,7 @@ export function makeThaiEditorClass(Base: EditorConstructor = CustomEditor): Edi
      * that unit contract in one documented place.
      */
     private computeVerticalMoveColumn(currentVisualCell: number, sourceMaxCell: number, targetMaxCell: number): number {
-    // @ts-expect-error — private-in-TS, real prototype method at runtime.
+      // @ts-expect-error — private-in-TS, real prototype method at runtime.
       return super.computeVerticalMoveColumn(currentVisualCell, sourceMaxCell, targetMaxCell) as number
     }
 
@@ -125,8 +125,7 @@ export function makeThaiEditorClass(Base: EditorConstructor = CustomEditor): Edi
     private moveToVisualLine(visualLines: VisualLine[], currentVisualLine: number, targetVisualLine: number): void {
       const currentVL = visualLines[currentVisualLine]
       const targetVL = visualLines[targetVisualLine]
-      if (!(currentVL && targetVL))
-        return
+      if (!(currentVL && targetVL)) return
       // @ts-expect-error — `state` is private (and untyped) on pi-tui's Editor.
       const state = this.state as EditorState
       // @ts-expect-error — private field, set by stock code on snap.
@@ -137,12 +136,11 @@ export function makeThaiEditorClass(Base: EditorConstructor = CustomEditor): Edi
       // that offset in cells.
       let currentVisualCell: number
       if (snappedFrom !== null) {
-      // @ts-expect-error — private method on pi-tui's Editor, verified at runtime.
+        // @ts-expect-error — private method on pi-tui's Editor, verified at runtime.
         const vlIndex = this.findVisualLineAt(visualLines, currentVL.logicalLine, snappedFrom) as number
         const vl = visualLines[vlIndex]!
         currentVisualCell = visibleWidth((state.lines[vl.logicalLine] || '').slice(vl.startCol, snappedFrom))
-      }
-      else {
+      } else {
         currentVisualCell = visibleWidth(
           (state.lines[currentVL.logicalLine] || '').slice(currentVL.startCol, state.cursorCol),
         )
@@ -151,13 +149,13 @@ export function makeThaiEditorClass(Base: EditorConstructor = CustomEditor): Edi
       // For non-last segments, clamp inside the segment (stock: length - 1;
       // a cell short of the segment end, which the grapheme walk below floors
       // to the boundary before a wide trailing cluster).
-      const isLastSourceSegment
-        = currentVisualLine === visualLines.length - 1
-          || visualLines[currentVisualLine + 1]?.logicalLine !== currentVL.logicalLine
+      const isLastSourceSegment =
+        currentVisualLine === visualLines.length - 1 ||
+        visualLines[currentVisualLine + 1]?.logicalLine !== currentVL.logicalLine
       const sourceMaxCell = isLastSourceSegment ? currentVL.cells : Math.max(0, currentVL.cells - 1)
-      const isLastTargetSegment
-        = targetVisualLine === visualLines.length - 1
-          || visualLines[targetVisualLine + 1]?.logicalLine !== targetVL.logicalLine
+      const isLastTargetSegment =
+        targetVisualLine === visualLines.length - 1 ||
+        visualLines[targetVisualLine + 1]?.logicalLine !== targetVL.logicalLine
       const targetMaxCell = isLastTargetSegment ? targetVL.cells : Math.max(0, targetVL.cells - 1)
 
       const moveToCell = this.computeVerticalMoveColumn(currentVisualCell, sourceMaxCell, targetMaxCell)
@@ -174,11 +172,9 @@ export function makeThaiEditorClass(Base: EditorConstructor = CustomEditor): Edi
       let targetCol = Math.min(targetVL.startCol, logicalLine.length)
       let usedCells = 0
       for (const seg of segments) {
-        if (seg.index < targetVL.startCol)
-          continue
+        if (seg.index < targetVL.startCol) continue
         const cells = visibleWidth(seg.segment)
-        if (usedCells + cells > moveToCell)
-          break
+        if (usedCells + cells > moveToCell) break
         usedCells += cells
         targetCol = seg.index + seg.segment.length
       }
@@ -187,22 +183,20 @@ export function makeThaiEditorClass(Base: EditorConstructor = CustomEditor): Edi
       // Stock snapping: land on the start of an atomic multi-grapheme segment
       // (paste markers) rather than inside it. Pure UTF-16 arithmetic, copied.
       for (const seg of segments) {
-        if (seg.index > state.cursorCol)
-          break
-        if (seg.segment.length <= 1)
-          continue
+        if (seg.index > state.cursorCol) break
+        if (seg.segment.length <= 1) continue
         if (state.cursorCol < seg.index + seg.segment.length) {
           const isContinuation = seg.index < targetVL.startCol
           const isMovingDown = targetVisualLine > currentVisualLine
           if (isContinuation && isMovingDown) {
-          // The segment started on a previous visual line and we already
-          // visited it on the way down: skip its continuation VLs.
+            // The segment started on a previous visual line and we already
+            // visited it on the way down: skip its continuation VLs.
             const segEnd = seg.index + seg.segment.length
             let next = targetVisualLine + 1
             while (
-              next < visualLines.length
-              && visualLines[next]!.logicalLine === targetVL.logicalLine
-              && visualLines[next]!.startCol < segEnd
+              next < visualLines.length &&
+              visualLines[next]!.logicalLine === targetVL.logicalLine &&
+              visualLines[next]!.startCol < segEnd
             ) {
               next++
             }
@@ -247,14 +241,12 @@ export function makeThaiEditorClass(Base: EditorConstructor = CustomEditor): Edi
       const codePoints = [...beforeCursor]
       const tail = codePoints[codePoints.length - 1]
       const prev = codePoints[codePoints.length - 2]
-      const isAmPair
-        = (tail === '\u0E32' && prev === '\u0E4D')
-          || (tail === '\u0E4D' && prev === '\u0E32')
+      const isAmPair = (tail === '\u0E32' && prev === '\u0E4D') || (tail === '\u0E4D' && prev === '\u0E32')
 
       const graphemes = [...self.segment(beforeCursor, 'grapheme')]
       const cluster = graphemes[graphemes.length - 1]?.segment
       if (state.cursorCol === 0 || (!isAmPair && (!cluster || !isThaiPeelable(cluster)))) {
-      // @ts-expect-error — private-in-TS, real prototype method at runtime.
+        // @ts-expect-error — private-in-TS, real prototype method at runtime.
         super.handleBackspace()
         return
       }
@@ -271,12 +263,10 @@ export function makeThaiEditorClass(Base: EditorConstructor = CustomEditor): Edi
       self.setCursorCol(head.length)
 
       // Stock tail, copied verbatim (editor.js:1132-1150).
-      if (self.onChange)
-        self.onChange(self.getText())
+      if (self.onChange) self.onChange(self.getText())
       if (self.autocompleteState) {
         self.updateAutocomplete()
-      }
-      else {
+      } else {
         const currentLine = state.lines[state.cursorLine] || ''
         const textBeforeCursor = currentLine.slice(0, state.cursorCol)
         if (self.isInSlashCommandContext(textBeforeCursor) || self.autocompleteTriggerPattern.test(textBeforeCursor)) {
@@ -309,6 +299,6 @@ export function missingEditorMethods(proto: object = CustomEditor.prototype): st
   return REQUIRED_EDITOR_METHODS.filter(
     // Walks the whole chain: the methods sit on the pi-tui Editor ancestor,
     // not on CustomEditor.prototype itself.
-    name => typeof (proto as Record<string, unknown>)[name] !== 'function',
+    (name) => typeof (proto as Record<string, unknown>)[name] !== 'function',
   )
 }

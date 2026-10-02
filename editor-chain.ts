@@ -62,8 +62,7 @@ export function chainEditorComponent(
           if (probe && typeof probe.handleInput === 'function' && typeof probe.getText === 'function') {
             base = probe.constructor as EditorConstructor
           }
-        }
-        catch {
+        } catch {
           // Foreign factory threw while probing — fall back to pi's stock base.
         }
       }
@@ -72,7 +71,6 @@ export function chainEditorComponent(
     }
     return new Composed(tui, theme, keybindings)
   }
-  if (Composed)
-    factory.editorClass = Composed
+  if (Composed) factory.editorClass = Composed
   ui.setEditorComponent(factory)
 }

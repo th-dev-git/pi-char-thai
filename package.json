@@ -1,36 +1,36 @@
 {
   "name": "pi-char-thai",
-  "type": "module",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Thai input fixes for pi's editor: vertical cursor drift and combining-mark Backspace (custom editor subclass, no core patch)",
-  "license": "MIT",
+  "keywords": [
+    "pi-coding-agent",
+    "pi-extension",
+    "pi-package",
+    "thai"
+  ],
   "homepage": "https://github.com/th-dev-git/pi-char-thai",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/th-dev-git/pi-char-thai.git"
   },
-  "keywords": [
-    "pi-package",
-    "pi-extension",
-    "pi-coding-agent",
-    "thai"
-  ],
   "files": [
     "*.ts",
     "LICENSE",
     "README.md",
     "package.json"
   ],
-  "pi": {
-    "extensions": [
-      "./index.ts"
-    ]
-  },
+  "type": "module",
   "scripts": {
     "test": "echo 'Tests live in the pi-extensions repo: bun test tests/pi-char-thai.test.ts'"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
     "@earendil-works/pi-tui": "*"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
   }
 }

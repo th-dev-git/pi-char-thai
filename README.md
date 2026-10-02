@@ -36,9 +36,9 @@ At every other input path, Pi's native editing behavior stays unchanged.
 
 ## Implementation map
 
-| File | Responsibility |
-|------|----------------|
-| `index.ts` | Extension entry point. Registers the custom editor via `setEditorComponent`; guards headless sessions and incompatible editor shapes. |
+| File        | Responsibility                                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.ts`  | Extension entry point. Registers the custom editor via `setEditorComponent`; guards headless sessions and incompatible editor shapes. |
 | `editor.ts` | `ThaiEditor`; grapheme-aware visual line map, vertical move column computation, Thai combining-mark Backspace, required-method probe. |
 
 ## Test

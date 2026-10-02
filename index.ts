@@ -13,8 +13,7 @@ import { chainEditorComponent } from './editor-chain'
 
 export default function charThai(pi: ExtensionAPI) {
   pi.on('session_start', (_event, ctx) => {
-    if (!ctx.hasUI)
-      return // RPC/print modes never construct an editor
+    if (!ctx.hasUI) return // RPC/print modes never construct an editor
     try {
       const missing = missingEditorMethods()
       if (missing.length > 0) {
@@ -27,13 +26,11 @@ export default function charThai(pi: ExtensionAPI) {
       // Chain, don't replace: another editor-installing extension (e.g.
       // pi-slash-suggest) may load before or after us (editor-chain.ts).
       chainEditorComponent(ctx.ui, makeThaiEditorClass)
-    }
-    catch (err) {
+    } catch (err) {
       // Never take down pi startup over an editor swap.
       try {
         ctx.ui.notify(`pi-char-thai: editor install failed (${String(err)}) — keeping the stock editor`, 'error')
-      }
-      catch {}
+      } catch {}
     }
   })
 }
